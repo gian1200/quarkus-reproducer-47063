@@ -30,33 +30,48 @@ public class GreetingResource {
 	public Response process(DummyObject request) {
 		Log.infov("Initial log with traceId: {0}", request);
 
-		eventBus.send("blocking-dummy-consumer", request);
-		eventBus.send("non-blocking-dummy-consumer", request);
+		DummyObject sendObject = request.toBuilder().build();
+		sendObject.setMethod("Send");
+		eventBus.send("blocking-dummy-consumer", sendObject);
+		eventBus.send("non-blocking-dummy-consumer", sendObject);
+		mutinityEventBus.send("mutinity-blocking-dummy-consumer", sendObject);
+		mutinityEventBus.send("mutinity-non-blocking-dummy-consumer", sendObject);
 
-		mutinityEventBus.send("mutinity-blocking-dummy-consumer", request);
-		mutinityEventBus.send("mutinity-non-blocking-dummy-consumer", request);
+		DummyObject requestObject = request.toBuilder().build();
+		requestObject.setMethod("Request");
+		eventBus.request("blocking-dummy-consumer", requestObject);
+		eventBus.request("non-blocking-dummy-consumer", requestObject);
+		mutinityEventBus.request("mutinity-blocking-dummy-consumer", requestObject);
+		mutinityEventBus.request("mutinity-non-blocking-dummy-consumer", requestObject);
+
+		DummyObject publishObject = request.toBuilder().build();
+		publishObject.setMethod("Publish");
+		eventBus.publish("blocking-dummy-consumer", publishObject);
+		eventBus.publish("non-blocking-dummy-consumer", publishObject);
+		mutinityEventBus.publish("mutinity-blocking-dummy-consumer", publishObject);
+		mutinityEventBus.publish("mutinity-non-blocking-dummy-consumer", publishObject);
 
 		return Response.ok().build();
 	}
 
 	@ConsumeEvent(value = "blocking-dummy-consumer", blocking = true)
-	void consumeBlockingDummyEvent(DummyObject request) {
-		Log.infov("this log doesn't have traceId: {0}", request);
+	void consumeBlockingDummyEvent(DummyObject obj) {
+		Log.infov("Blocking {0}", obj);
 	}
 
 	@ConsumeEvent(value = "non-blocking-dummy-consumer", blocking = false)
-	void consumeNonBlockingDummyEvent(DummyObject request) {
-		Log.infov("this log has traceId: {0}", request);
+	void consumeNonBlockingDummyEvent(DummyObject obj) {
+		Log.infov("Non-blocking {0}", obj);
 	}
 
 	@ConsumeEvent(value = "mutinity-blocking-dummy-consumer", blocking = true)
-	void consumeMutinityBlockingDummyEvent(DummyObject request) {
-		Log.infov("Mutinity: this log doesn't have traceId: {0}", request);
+	void consumeMutinityBlockingDummyEvent(DummyObject obj) {
+		Log.infov("Mutinity: Blocking {0}", obj);
 	}
 
 	@ConsumeEvent(value = "mutinity-non-blocking-dummy-consumer", blocking = false)
-	void consumeMutinityNonBlockingDummyEvent(DummyObject request) {
-		Log.infov("Mutinity: this log has traceId: {0}", request);
+	void consumeMutinityNonBlockingDummyEvent(DummyObject obj) {
+		Log.infov("Mutinity: Non-blocking {0}", obj);
 	}
 
 	@GET
